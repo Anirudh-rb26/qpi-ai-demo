@@ -4,6 +4,7 @@ import { ClerkProvider, SignedIn, UserButton } from "@clerk/nextjs";
 import { Menubar } from "@/components/ui/menubar";
 import { MenubarMenu, MenubarTrigger } from "@radix-ui/react-menubar";
 import 'react-toastify/dist/ReactToastify.css';
+import { EdgeStoreProvider } from "@/lib/edgestore";
 
 
 export const metadata: Metadata = {
@@ -24,16 +25,18 @@ export default function RootLayout({
     >
       <html lang="en">
         <body className="antialiased">
-          <Menubar className="justify-end px-3 bg-black border-black rounded-none">
-            <MenubarMenu>
-              <MenubarTrigger className="mt-5">
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
-              </MenubarTrigger>
-            </MenubarMenu>
-          </Menubar>
-          {children}
+          <EdgeStoreProvider>
+            <Menubar className="justify-end px-3 bg-black border-black rounded-none">
+              <MenubarMenu>
+                <MenubarTrigger className="mt-5">
+                  <SignedIn>
+                    <UserButton />
+                  </SignedIn>
+                </MenubarTrigger>
+              </MenubarMenu>
+            </Menubar>
+            {children}
+          </EdgeStoreProvider>
         </body>
       </html>
     </ClerkProvider>
