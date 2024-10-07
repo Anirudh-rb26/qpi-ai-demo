@@ -1,59 +1,62 @@
-"use client"
+"use client";
 
 import ProgressBar from '@/components/progress-bar';
 import { Button } from '@/components/ui/button';
-import { useEdgeStore } from '@/lib/edgestore';
-import React, { useState } from 'react'
-import { Bounce, Flip, toast, ToastContainer } from 'react-toastify';
+import React, { useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import { useEdgeStore } from '@/lib/edgestore'; // Import useEdgeStore here
+import uploadService from '@/lib/upload-service';
+import { useRouter } from 'next/navigation';
 
 const UploadFilesPage = () => {
-    const [file, setFile] = useState<File>();
-    const [uploadProgress, setUploadProgress] = useState<number>(0);
-    const { edgestore } = useEdgeStore();
+    const [files, setFiles] = useState<File[]>([]);
+    const { edgestore } = useEdgeStore(); // Get edgestore from useEdgeStore
+    const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const selectedFiles = Array.from(e.target.files);
+            setFiles(selectedFiles);
+            // Reset progress for new selection
+            const initialProgress: { [key: string]: number } = {};
+            selectedFiles.forEach(file => {
+                initialProgress[file.name] = 0;
+            });
+            setUploadProgress(initialProgress);
+        }
+    };
+
+    const handleUpload = () => {
+        uploadService.uploadFiles(edgestore, files); // Pass edgestore to the upload service
+    };
+
+    const router = useRouter();
+
+    function navigateToPage(link: string) {
+        router.push(link);
+    }
 
     return (
         <main className='bg-black min-h-screen flex flex-col items-center justify-center'>
             <div className='flex flex-col gap-5'>
                 <input
                     type="file"
-                    onChange={(e) => {
-                        setFile(e.target.files?.[0]);
-                    }} className='text-gray-700' />
+                    onChange={handleFileChange}
+                    className='text-gray-700'
+                    multiple // Allow multiple files
+                />
 
-                <Button onClick={async () => {
-                    if (file) {
-                        const res = await edgestore.publicFiles.upload({
-                            file, onProgressChange: (progress) => {
-                                setUploadProgress(progress);
-                                if (progress === 100) {
-                                    // Success Toast
-                                    toast.success('File Uploaded', {
-                                        position: "bottom-center",
-                                        autoClose: 5000,
-                                        hideProgressBar: false,
-                                        closeOnClick: true,
-                                        pauseOnHover: true,
-                                        draggable: true,
-                                        progress: undefined,
-                                        theme: "dark",
-                                        transition: Bounce,
-                                    });
+                <Button onClick={handleUpload}>Upload</Button>
 
-                                    // Timeout to reset Progressbar
-                                    setTimeout(() => {
-                                        setUploadProgress(0);
-                                    }, 3000);
-                                }
-                                console.log(progress);
-                            }
-                        });
-                        console.log(res);
-                    }
-                }}>Upload</Button>
-
+                <Button onClick={() => { navigateToPage('/') }}>Go Back</Button>
 
                 <div>
-                    <ProgressBar progress={uploadProgress} />
+                    {files.map(file => (
+                        <div key={file.name}>
+                            <span className='text-white'>{file.name}</span>
+                            <ProgressBar progress={uploadProgress[file.name] || 0} />
+                        </div>
+                    ))}
                 </div>
 
                 <ToastContainer
@@ -67,11 +70,10 @@ const UploadFilesPage = () => {
                     draggable
                     pauseOnHover
                     theme="dark"
-                    transition={Flip}
                 />
             </div>
-        </main >
-    )
+        </main>
+    );
 }
 
-export default UploadFilesPage
+export default UploadFilesPage;
