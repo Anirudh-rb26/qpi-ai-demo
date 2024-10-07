@@ -3,12 +3,14 @@ import { Bounce } from "react-toastify";
 import axios from "axios";
 
 interface UploadService {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   uploadFiles(edgestore: any, files: File[]): Promise<void>;
 }
 
 // VirusTotal API configuration
 const VIRUSTOTAL_API_KEY = process.env.NEXT_PUBLIC_APIKEY_VIRUSTOTAL_PERSONAL;
 const VIRUSTOTAL_API_URL = "https://www.virustotal.com/api/v3";
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const uploadService: UploadService = {
   async uploadFiles(edgestore, files) {
@@ -42,6 +44,7 @@ const uploadService: UploadService = {
 
         // Polling for the analysis result
         while (scanStatus === "queued" || scanStatus === "in_progress") {
+          await delay(1000);
           scanResult = await axios.get(`${VIRUSTOTAL_API_URL}/analyses/${analysisId}`, {
             headers: { "x-apikey": VIRUSTOTAL_API_KEY },
           });
